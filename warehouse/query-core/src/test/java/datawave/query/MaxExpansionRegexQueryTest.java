@@ -1,5 +1,6 @@
 package datawave.query;
 
+import datawave.query.exceptions.DatawaveFatalQueryException;
 import datawave.query.exceptions.FullTableScansDisallowedException;
 import datawave.query.testframework.AbstractFunctionalQuery;
 import datawave.query.testframework.AccumuloSetupHelper;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -27,6 +29,7 @@ import static datawave.query.testframework.RawDataManager.NOT_OP;
 import static datawave.query.testframework.RawDataManager.OR_OP;
 import static datawave.query.testframework.RawDataManager.RE_OP;
 import static datawave.query.testframework.RawDataManager.RN_OP;
+import static datawave.query.testframework.RawDataManager.JEXL_AND_OP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -191,11 +194,18 @@ public class MaxExpansionRegexQueryTest extends AbstractFunctionalQuery {
         String fieldVal = EQ_OP + "'a-1'";
         String query = Constants.ANY_FIELD + regexPhrase + AND_OP + Constants.ANY_FIELD + fieldVal;
         
-        ivaratorConfig();
-        
         // '!~' operation is not processed correctly - see QueryJexl docs
         // this is a hack for the expected results
-        String expect = CityField.CITY.name() + EQ_OP + "'city-a'";
+
+        String anyRegex = this.dataManager.convertAnyField(regexPhrase);
+        String anyFieldVal = this.dataManager.convertAnyField(fieldVal);
+
+       // String expect = CityField.CITY.name() + EQ_OP + "'city-a'";
+
+        String expect = anyRegex + AND_OP + anyFieldVal;
+
+        ivaratorConfig();
+        this.logic.setMaxValueExpansionThreshold(10);
         runTest(query, expect);
         parsePlan(VALUE_THRESHOLD_JEXL_NODE, 0);
         
@@ -266,7 +276,7 @@ public class MaxExpansionRegexQueryTest extends AbstractFunctionalQuery {
         runTest(query, expect);
         // verify that the ivarators ran and completed
         assertTrue(countComplete(dirs) >= 1);
-
+        
         // clear list before new set is added
         dirs.clear();
         // now get a new set of ivarator directories
@@ -310,7 +320,7 @@ public class MaxExpansionRegexQueryTest extends AbstractFunctionalQuery {
         runTest(query, expect);
         // verify that the ivarators ran and completed
         assertTrue(countComplete(dirs) >= 1);
-
+        
         // clear list before new set is added
         dirs.clear();
         

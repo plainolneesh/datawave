@@ -115,6 +115,7 @@ import org.apache.commons.jexl2.parser.JexlNode;
 import org.apache.commons.jexl2.parser.ParseException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -146,6 +147,9 @@ import java.util.stream.Collectors;
 public class DefaultQueryPlanner extends QueryPlanner implements Cloneable {
     
     private static final Logger log = ThreadConfigurableLogger.getLogger(DefaultQueryPlanner.class);
+    {
+        log.setLevel(Level.DEBUG);
+    }
     
     public static final String EXCEED_TERM_EXPANSION_ERROR = "Query failed because it exceeded the query term expansion threshold";
     
@@ -1503,8 +1507,10 @@ public class DefaultQueryPlanner extends QueryPlanner implements Cloneable {
     
     public static void logQuery(ASTJexlScript queryTree, String message) {
         if (log.isTraceEnabled()) {
+            log.trace(JexlStringBuildingVisitor.buildQuery(queryTree));
             logTrace(PrintingVisitor.formattedQueryStringList(queryTree), message);
         } else if (log.isDebugEnabled()) {
+            log.debug(JexlStringBuildingVisitor.buildQuery(queryTree));
             logDebug(PrintingVisitor.formattedQueryStringList(queryTree, maxChildNodesToPrint), message);
         }
     }
